@@ -1,0 +1,48 @@
+manini(1)
+=========
+:doctype: manpage
+
+
+NAME
+----
+timezoned - Daemon to feed a command line or CGI script with GPS values
+
+
+SYNOPSIS
+--------
+*timezoned* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+
+ Setting timezone based on GPS location queried from gpsd
+
+
+
+OPTIONS
+-------
+-c --configfile /path/to/configfile ::
+    Set the path to the configfile. Default is /etc/timezoned.ini
+
+-h --help::
+    Print help text
+
+-v --version::
+    print version info
+
+
+
+CONFIGURATION
+-------------
+    See the commented /etc/timezoned.ini
+
+AUTHORS
+-------
+Zoltan Gyarmati <mr.zoltan.gyarmati@gmail.com>
+
+
+COPYING
+-------
+Copyright (c) 2016 Zoltan Gyarmati KFT (https://zgyarmati.de)
+LGPL
