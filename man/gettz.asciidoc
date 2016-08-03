@@ -1,23 +1,23 @@
-timezoned(1)
-============
+gettz(1)
+=========
 :doctype: manpage
 
 
 NAME
 ----
-timezoned - Daemon to set the system's timezone based on position
-received via GPSD
+gettz - utility to search the timezone code based on the coordinates. Optionally 
+it also can set the system's timezone
 
 
 SYNOPSIS
 --------
-*timezoned* ['OPTIONS']
+*gettz* ['OPTIONS']
 
 
 DESCRIPTION
 -----------
 
- Setting timezone based on GPS location queried from gpsd
+ Finding timezone based on coordinates
 
 
 
