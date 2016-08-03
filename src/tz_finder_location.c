@@ -40,11 +40,7 @@ tz_get_name_by_coordinates(double longitude, double lattitude)
     }
 
     return retval;
-
-
 }
-
-
 
 
 //shamelessly taken from

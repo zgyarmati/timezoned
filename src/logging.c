@@ -10,7 +10,7 @@
 #include <math.h>
 
 #define SYSLOG_NAMES
-#include "log.h"
+#include "logging.h"
 
 #define LOG_MSG_MAX_LENGTH 256  // we dont want longer messages then 255 chars
 
@@ -56,25 +56,26 @@ char* print_time(char *buf, size_t bufsize)
     return buf;
 }
 
-int log_init(Configuration *c)
+int log_init(const char *cloglevel, const char *target, const char *filepath, 
+                 const char *facility, const long int max_size)
 {
-    loglevel = log_lookup_loglevel(c->loglevel);
-    logfilename = strdup(c->logfile);
+    loglevel = log_lookup_loglevel(cloglevel);
+    logfilename = strdup(filepath);
 
-    if (!strcmp(c->logtarget,"stdout")){
+    if (!strcmp(target,"stdout")){
         log_print = log_print_console;
     }
-    else if (!strcmp(c->logtarget,"syslog"))
+    else if (!strcmp(target,"syslog"))
     #ifndef WIN32
     {
-        openlog(c->appname, LOG_CONS | LOG_PID | LOG_NDELAY,
-                log_lookup_syslog_facility(c->logfacility));
+        openlog("timezoned", LOG_CONS | LOG_PID | LOG_NDELAY,
+                log_lookup_syslog_facility(facility));
         log_print = log_print_syslog;
     }
     #else
         fprintf (stderr, "Syslog log target not supported on Windows");
     #endif
-    else if (!strcmp(c->logtarget,"file")){
+    else if (!strcmp(target,"file")){
         logfile = fopen (logfilename,"a+");
         if (!logfile){
             fprintf(stderr, "Opening logfile %s failed: %s\n", logfilename,strerror(errno));

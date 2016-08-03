@@ -34,11 +34,10 @@ init_config(const char*filepath){
     retval->appname = INISECTION;
     //logging
     retval->logtarget = iniparser_getstring(ini,INISECTION"logtarget","stdout");
-    retval->logfile = iniparser_getstring(ini,INISECTION"logfile","smartserver-snmpd.log");
+    retval->logfile = iniparser_getstring(ini,INISECTION"logfile","timezoned.log");
     retval->logfacility = iniparser_getstring(ini,INISECTION"logfacility","local0");
     retval->loglevel = iniparser_getstring(ini,INISECTION"loglevel","fatal");
     //application
-    retval->script_path = iniparser_getstring(ini,INISECTION"action","");
     retval->check_interval = iniparser_getint(ini,INISECTION"check_interval",10);
     //gpsd
     retval->gpsd_address = iniparser_getstring(ini,INISECTION"gpsdaddress","127.0.0.1");

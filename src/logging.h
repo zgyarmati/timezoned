@@ -1,13 +1,12 @@
 //log.h
-#ifndef LOG_H
-#define LOG_H
+#ifndef LOGGING_H
+#define LOGGING_H
 
 #ifndef WIN32
 #include <syslog.h>
 #endif
 
 
-#include "configuration.h"
 /* the members indicating the type/severity of the log message
  */
 typedef enum {log_fatal, log_error, log_warning, log_info, log_debug} log_msg_type;
@@ -83,7 +82,8 @@ void log_print_syslog (
  *  @param file: the file to log
  *  @param level: the max loglevel
  */
-int log_init(Configuration *c);
+int log_init(const char *loglevel, const char *target, const char *filepath,
+             const char *facility, const long int max_size);
 
 void log_finalize();
 int log_lookup_loglevel(const char *name);

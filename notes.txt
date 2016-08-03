@@ -1,1 +1,7 @@
 http://stackoverflow.com/questions/5584602/determine-timezone-from-latitude-longitude-without-using-web-services-like-geona
+
+http://redwarrior.org/blog/?p=16
+
+
+./gettz  20.3821615  47.891469167
+

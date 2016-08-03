@@ -11,7 +11,6 @@ typedef struct
     const char* logfile;
     const char* logfacility;
     const char* loglevel;
-    const char* script_commandline;
     int check_interval;
     const char* gpsd_address;
     int gpsd_port;
