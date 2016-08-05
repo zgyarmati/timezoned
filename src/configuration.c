@@ -42,6 +42,9 @@ init_config(const char*filepath){
     //gpsd
     retval->gpsd_address = iniparser_getstring(ini,INISECTION"gpsdaddress","127.0.0.1");
     retval->gpsd_port = iniparser_getint(ini,INISECTION"gpsdport",2947);
+    // tz_world shapefiles
+    retval->shp_path = iniparser_getstring(ini,INISECTION"tz_world_shp_file","/usr/share/timezoned/world/tz_world.shp");
+    retval->dbf_path = iniparser_getstring(ini,INISECTION"tz_world_dbf_file","/usr/share/timezoned/world/tz_world.dbf");
     return retval;
 }
 

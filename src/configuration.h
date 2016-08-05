@@ -14,6 +14,8 @@ typedef struct
     int check_interval;
     const char* gpsd_address;
     int gpsd_port;
+    const char* shp_path;
+    const char* dbf_path;
 
 } Configuration;
 

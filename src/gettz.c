@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <stdarg.h>
 
+#include "configuration.h"
 #include "tz_finder_location.h"
 
 #ifndef PACKAGE_STRING
@@ -14,7 +15,12 @@
 #define PACKAGE_BUGREPORT "mr.zoltan.gyarmati@gmail.com"
 #endif
 
+// can be increased to add verbosity
 int verbose = 0;
+// 0 or 1, when 1, we print only the timezone
+int quiet = 0;
+//can be overriden from the command line
+static char *conf_file_name = "timezoned.ini";
 
 void
 print_version()
@@ -31,17 +37,19 @@ print_help()
     fprintf(stderr, "gettz <options> longitude latitude\n\n");
     fprintf(stderr, "where longitude and latitude are the geographical coordinates in decimal format\n");
     fprintf(stderr, "Options:\n");
+    fprintf(stderr, "\t-c --configfile filename  Read configuration from the file\n");
     fprintf(stderr, "\t-h, --help           Print this help\n");
     fprintf(stderr, "\t-V, --version        Print version info\n");
     fprintf(stderr, "\t-s, --set-timezone   Set the system timezone to the requested value\n");
     fprintf(stderr, "\t-v, --verbose        Verbose output, multiple for more verbose\n");
+    fprintf(stderr, "\t-q, --quiet          Print only the timezone (or nothing), overrides -v\n");
 }
 
 
 void
 verbosemsg(int level, const char *formatstring,...)
 {
-    if (level > verbose){
+    if (level > verbose || quiet){
         return;
     }
     va_list args;
@@ -62,17 +70,23 @@ errormsg(const char *formatstring,...)
 int
 main (int argc, char * argv[])
 {
+    //parse command line args
     int  set_system_tz = 0;
     char ch;
     static struct option long_options[] = {
-            {"help",    no_argument,       0,  'h' },
-            {"version", no_argument,       0,  'V' },
-            {"set-timezone",     no_argument,       0,  's' },
-            {"verbose", no_argument,       0,  'v' },
-            {0,         0,                 0,  0 }};
+        {"configfile", required_argument, 0, 'c'},
+        {"help",    no_argument,       0,  'h' },
+        {"version", no_argument,       0,  'V' },
+        {"set-timezone",     no_argument,       0,  's' },
+        {"verbose", no_argument,       0,  'v' },
+        {"quiet", no_argument,         0,  'q' },
+        {0,         0,                 0,  0 }};
 
-    while ((ch = getopt_long(argc, argv, "hvsV", long_options, NULL)) != -1){
+    while ((ch = getopt_long(argc, argv, "c:hvsVq", long_options, NULL)) != -1){
         switch (ch){
+            case 'c':
+                conf_file_name = strdup(optarg);
+                break;
             case 'h':
                 print_help();
                 exit(EXIT_SUCCESS);
@@ -86,6 +100,9 @@ main (int argc, char * argv[])
                 break;
             case 'v':
                 verbose++;
+                break;
+            case 'q':
+                quiet = 1;
                 break;
         }
     }
@@ -107,6 +124,22 @@ main (int argc, char * argv[])
         fprintf(stderr,"can't convert latitude value <%s>, exiting...\n",argv[--optind]);
         exit(EXIT_FAILURE);
     }
+
+    //init configuration
+    Configuration *config = init_config(conf_file_name);
+    if (config == NULL){
+        fprintf(stderr, "CONFIG ERROR, EXITING!\n");
+        exit(EXIT_FAILURE);
+    }
+    //get to the business
     verbosemsg(1,"Coordinates: longitude %f, latitude %f\n", longitude, latitude);
-    printf("Timezone: %s\n", tz_get_name_by_coordinates(longitude, latitude));
+    verbosemsg(1,"Map files: %s, %s\n",config->shp_path, config->dbf_path);
+    if (!quiet){
+        printf("Timezone: %s\n", tz_get_name_by_coordinates(longitude, latitude,
+                                config->shp_path, config->dbf_path));
+    }
+    else {
+        printf("%s\n", tz_get_name_by_coordinates(longitude, latitude,
+                                config->shp_path, config->dbf_path));
+    }
 }

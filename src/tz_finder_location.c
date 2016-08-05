@@ -7,43 +7,47 @@
 
 
 char *
-tz_get_name_by_coordinates(double longitude, double lattitude)
+tz_get_name_by_coordinates(double longitude, double lattitude,
+                           const char* shp_path, const char *dbf_path)
 {
 
     int i, nEntities, quality;
     char *retval = NULL;
     SHPHandle   hSHP;
     DBFHandle   hDBF;
-    hSHP = SHPOpen("../sandbox/world/tz_world.shp", "rb");
+    hSHP = SHPOpen(shp_path, "rb");
+    if(hSHP == NULL){
+        fprintf(stderr, "Failed to open .shp file: %s\n", shp_path);
+        return retval;
+    }
     SHPGetInfo(hSHP, &nEntities, NULL, NULL, NULL);
-    printf("Number of entities: %d\n", nEntities);
-    hDBF = DBFOpen( "../sandbox/world/tz_world.dbf", "rb" );
+    hDBF = DBFOpen( dbf_path, "rb" );
     if( hDBF == NULL ){
-        printf( "DBFOpen(%s,\"r\") failed.\n","../world/tz_world.dbf" );
-        exit( 2 );
+        fprintf(stderr, "Failed to open .shp file: %s\n", shp_path);
+        SHPClose(hSHP);
+        return retval;
     }
 
-    for( i = 0; i < nEntities; i++ )
-    {
+    for(i = 0; i < nEntities; i++) {
         SHPObject *psShape;
         psShape = SHPReadObject( hSHP, i );
-        if(psShape->nSHPType == SHPT_POLYGON)
-        {
-            if(tz_pnpoly(psShape->nVertices, psShape->padfX, psShape->padfY,
-                        longitude,lattitude)){
-                printf ("FOUND!!! TZID for shape: %d is: %s\n", i,
-                        DBFReadStringAttribute(hDBF, i, 0));
-                retval = strdup(DBFReadStringAttribute(hDBF, i, 0));
-            }
+        if(psShape->nSHPType != SHPT_POLYGON) {
+            continue;
+        }
+        if(tz_pnpoly(psShape->nVertices, psShape->padfX,
+                     psShape->padfY, longitude, lattitude)){
+            retval = strdup(DBFReadStringAttribute(hDBF, i, 0));
         }
         SHPDestroyObject( psShape );
     }
 
+    SHPClose(hSHP);
+    DBFClose(hDBF);
     return retval;
 }
 
 
-//shamelessly taken from
+// shamelessly taken from
 // http://stackoverflow.com/a/2922778/1494352
 int tz_pnpoly(int nvert, double *vertx, double *verty, float testx, float testy)
 {

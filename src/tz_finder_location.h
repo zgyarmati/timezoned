@@ -5,7 +5,8 @@
 /* looks up the timezone correspondig to the given
  * geographical coordinates
  */
-char *tz_get_name_by_coordinates(double longitude, double lattitude);
+char *tz_get_name_by_coordinates(double longitude, double lattitude,
+                                const char* shp_path, const char *dbf_path);
 
 
 /* accepts an array of a polygon's vertices' coordinates, the
