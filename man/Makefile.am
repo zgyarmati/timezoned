@@ -6,15 +6,15 @@ dir = $(top_srcdir)/man
 man_MANS = timezoned.1 gettz.1
 
 timezoned.1:
-	$(A2X) -f manpage timezoned.asciidoc
+	$(A2X) -k -f manpage timezoned.asciidoc
 
-timezoned.pdf:
+timezoned.pdf: timezoned.1
 	$(A2X) -f pdf timezoned.asciidoc -a revdate="`date`" -v -v
 
 gettz.1:
-	$(A2X) -f manpage gettz.asciidoc
+	$(A2X) -k -f manpage gettz.asciidoc
 
-gettz.pdf:
+gettz.pdf: gettz.1
 	$(A2X) -f pdf gettz.asciidoc -a revdate="`date`" -v -v
 
 CLEANFILES = timezoned.1 timezoned.pdf gettz.1 gettz.pdf
