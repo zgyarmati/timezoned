@@ -133,8 +133,8 @@ static void daemonize()
  */
 void print_help(void)
 {
-    printf("\n Usage: %s [OPTIONS]\n\n", app_name);
-    printf("  Options:\n");
+    printf("\nUsage: %s [OPTIONS]\n\n", app_name);
+    printf("Options:\n");
     printf("   -h --help                 Print this help\n");
     printf("   -c --configfile filename  Read configuration from the file\n");
     printf("   -d --daemon               Daemonize this application\n");

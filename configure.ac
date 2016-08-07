@@ -39,6 +39,7 @@ AM_CONDITIONAL([HAVE_A2X], [test -n "$A2X"])
 
 AC_CONFIG_FILES([Makefile
                  man/Makefile
+                 data/Makefile
                  src/Makefile])
 
 AC_OUTPUT
