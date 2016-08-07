@@ -21,19 +21,30 @@ AC_CHECK_FUNCS([gettimeofday memset strchr strdup strerror strtol])
 
 
 # Look for libgps
-havelgps="yes"
-AC_CHECK_LIB([gps], [gps_open],,havelgps=no)
-AC_CHECK_HEADER([gps.h],,havelgps=no)
-
-if test "$havelgps" = "yes"; then
+PKG_CHECK_MODULES(GPSD, [libgps >= 2.91],  have_gpsd="yes", have_gpsd="no")
+if test "x$have_gpsd" = "xyes"; then
     AC_DEFINE(HAVE_LIBGPS, 1, gpsd libgps client support)
-    KSLIBS="$KSLIBS -lgps"
+else
+    AC_MSG_ERROR([No libgps found!])
 fi
+
+
+# look for shapelib (no pkg-config... )
+AC_CHECK_LIB([shp], [SHPOpen],havelibshp=yes,havelibshp=no)
+AC_CHECK_HEADER([shapefil.h],havelibshp=yes,havelibshp=no)
+
+if test "$havelibshp" = "yes"; then
+    AC_DEFINE(HAVE_LIBSHP, 1, shapefile support)
+    AC_SUBST(SHP_LIBS,-lshp)
+else
+    AC_MSG_ERROR([No libshp found!])
+fi
+
 
 #check for doc generating tools
 AC_CHECK_PROGS([A2X], [a2x])
-if test -z "$A2X";
-   then AC_MSG_WARN([asciidoc a2x not found - continuing without building man pages])
+if test -z "$A2X";then 
+    AC_MSG_WARN([asciidoc a2x not found - continuing without building man pages])
 fi
 AM_CONDITIONAL([HAVE_A2X], [test -n "$A2X"])
 
