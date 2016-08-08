@@ -13,8 +13,11 @@
 #include <sys/types.h>
 #include <errno.h>
 
+#include <gps.h>
+
 #include "configuration.h"
 #include "logging.h"
+#include "tz_system_utils.h"
 
 static int running = 0;
 static int delay = 1;
@@ -191,14 +194,44 @@ int main(int argc, char *argv[])
 
     /* This global variable can be changed in function handling signal */
     running = 1;
+    system_execute_action("echo %s > /tmp/timezone", "Europe/Budapest");
 
     /* Never ending loop of server */
     while(running == 1) {
-        sleep(delay);
-    }
+        struct gps_data_t gps_data;
+        int rc;
+        int i = 0;
+        INFO("connecting GPSd");
 
-    /* Close log file, when it is used. */
-    /* Write system log and close it. */
+        if ((rc = gps_open("localhost", "2947", &gps_data)) == -1) {
+            ERROR("code: %d, reason: %s\n", rc, gps_errstr(rc));
+            sleep(1); //we gotta try each second...
+            continue;
+        }
+        gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
+        while (i++ < 12){
+            if (gps_waiting (&gps_data, 2000000)) {
+                /* read data */
+                if ((rc = gps_read(&gps_data)) == -1) {
+                    WARNING("error occured reading gps data. code: %d, reason: %s\n", rc, gps_errstr(rc));
+                    continue;
+                }
+                /* Display data from the GPS receiver. */
+                if ((gps_data.status == STATUS_FIX) &&
+                    (gps_data.fix.mode == MODE_2D || gps_data.fix.mode == MODE_3D) &&
+                    !isnan(gps_data.fix.latitude) &&
+                    !isnan(gps_data.fix.longitude)) {
+                        INFO("latitude: %f, longitude: %f", gps_data.fix.latitude, gps_data.fix.longitude);
+                        break;
+                }
+                else {
+                    DEBUG("GPS read result invalid, retrying...");
+                } //we continue to the next trial to read
+            }
+        }
+        sleep(config->check_interval);
+    }
+    INFO("bye");
 
     return EXIT_SUCCESS;
 }

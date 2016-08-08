@@ -41,6 +41,20 @@ else
 fi
 
 
+# check whether the user wants to build with 
+AC_ARG_ENABLE([use-systemd], "Enable to let timezoned to use systemd to set the timezone and start at boot", 
+              use_systemd=yes, use_systemd=no)
+
+if test "x$use_systemd" = "xyes"; then
+    AC_DEFINE(USE_SYSTEMD, 1, Use systemd for autostart and system timezone settings)
+    PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.3.1])
+    AC_SUBST(DBUS_CFLAGS)
+    AC_SUBST(DBUS_LIBS)
+else
+    AC_MSG_WARN([Systemd support not enabled, building without!])
+fi
+
+
 #check for doc generating tools
 AC_CHECK_PROGS([A2X], [a2x])
 if test -z "$A2X";then 
