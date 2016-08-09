@@ -16,6 +16,7 @@ typedef struct
     int gpsd_port;
     const char* shp_path;
     const char* dbf_path;
+    const char* action_command;
 
 } Configuration;
 

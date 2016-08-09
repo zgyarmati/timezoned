@@ -12,19 +12,22 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <math.h>
 
 #include <gps.h>
 
 #include "configuration.h"
 #include "logging.h"
 #include "tz_system_utils.h"
+#include "tz_finder_location.h"
+
+#include <config.h>
 
 static int running = 0;
-static int delay = 1;
-static char *conf_file_name = "timezoned.ini";
-static char *pid_file = "/var/lock/timezoned";
+static char *conf_file_name = PACKAGE_NAME".ini";
+static char *pid_file = "/var/lock/"PACKAGE_NAME;
 static int pid_fd = -1;
-static char *app_name = NULL;
+static char *app_name = PACKAGE_NAME;
 
 /**
  * \brief   Callback function for handling signals.
@@ -48,6 +51,7 @@ void handle_signal(int sig)
         signal(SIGINT, SIG_DFL);
     }
 }
+
 
 /**
  * \brief This function will daemonize this app
@@ -144,7 +148,20 @@ void print_help(void)
     printf("\n");
 }
 
-/* Main function */
+
+void
+process_coordinates(const float lat, const float lon,
+                    const char *shp_path, const char *dbf_path)
+{
+    char *tz_name = tz_get_name_by_coordinates(lon, lat,shp_path, dbf_path);
+    INFO("%s\n",tz_name);
+
+    system_set_tz_dbus(tz_name);
+    system_execute_action(config->action_command, tz_name);
+}
+
+
+// Main function
 int main(int argc, char *argv[])
 {
     static struct option long_options[] = {
@@ -192,19 +209,18 @@ int main(int argc, char *argv[])
               config->logfacility, 0);
     INFO("Timezoned started, pid: %d", getpid());
 
-    /* This global variable can be changed in function handling signal */
+    // changed from signal handler
     running = 1;
-    system_execute_action("echo %s > /tmp/timezone", "Europe/Budapest");
 
-    /* Never ending loop of server */
+    // Never ending loop to check GPSd and process results if any
     while(running == 1) {
         struct gps_data_t gps_data;
         int rc;
         int i = 0;
-        INFO("connecting GPSd");
+        INFO("connecting to GPSd");
 
         if ((rc = gps_open("localhost", "2947", &gps_data)) == -1) {
-            ERROR("code: %d, reason: %s\n", rc, gps_errstr(rc));
+            ERROR("Failed to connect GPSd, code: %d, reason: %s\n", rc, gps_errstr(rc));
             sleep(1); //we gotta try each second...
             continue;
         }
@@ -213,7 +229,7 @@ int main(int argc, char *argv[])
             if (gps_waiting (&gps_data, 2000000)) {
                 /* read data */
                 if ((rc = gps_read(&gps_data)) == -1) {
-                    WARNING("error occured reading gps data. code: %d, reason: %s\n", rc, gps_errstr(rc));
+                    WARNING("Error occured reading gps data. code: %d, reason: %s\n", rc, gps_errstr(rc));
                     continue;
                 }
                 /* Display data from the GPS receiver. */
@@ -221,7 +237,10 @@ int main(int argc, char *argv[])
                     (gps_data.fix.mode == MODE_2D || gps_data.fix.mode == MODE_3D) &&
                     !isnan(gps_data.fix.latitude) &&
                     !isnan(gps_data.fix.longitude)) {
-                        INFO("latitude: %f, longitude: %f", gps_data.fix.latitude, gps_data.fix.longitude);
+                        INFO("Got GPSd coordinates, latitude: %f, longitude: %f",
+                             gps_data.fix.latitude, gps_data.fix.longitude);
+                        process_coordinates(gps_data.fix.latitude, gps_data.fix.longitude,
+                                            config->shp_path, config->dbf_path);
                         break;
                 }
                 else {
@@ -229,46 +248,10 @@ int main(int argc, char *argv[])
                 } //we continue to the next trial to read
             }
         }
+        gps_close(&gps_data);
         sleep(config->check_interval);
     }
     INFO("bye");
 
     return EXIT_SUCCESS;
 }
-
-
-
-#if 0
-int main(int argc, char* argv[])
-{
- 
-    int i, nEntities, quality;
-    SHPHandle   hSHP;
-    DBFHandle   hDBF;
-    hSHP = SHPOpen("../sandbox/world/tz_world.shp", "rb");
-    SHPGetInfo(hSHP, &nEntities, NULL, NULL, NULL);
-    printf("Number of entities: %d\n", nEntities);
-    hDBF = DBFOpen( "../sandbox/world/tz_world.dbf", "rb" );
-    if( hDBF == NULL ){
-        printf( "DBFOpen(%s,\"r\") failed.\n","../world/tz_world.dbf" );
-        exit( 2 );
-    }
- 
-    for( i = 0; i < nEntities; i++ )
-    {
-        SHPObject *psShape;
-        psShape = SHPReadObject( hSHP, i );
-        if(psShape->nSHPType == SHPT_POLYGON)
-        {
-            if(pnpoly(psShape->nVertices, psShape->padfX, psShape->padfY,
-                        atof(argv[1]),atof(argv[2]))){
-                printf ("FOUND!!! TZID for shape: %d is: %s\n", i,
-                        DBFReadStringAttribute(hDBF, i, 0));
-            }
-        }
-        SHPDestroyObject( psShape );
-    }
-}
-
-#endif
-

@@ -45,6 +45,8 @@ init_config(const char*filepath){
     // tz_world shapefiles
     retval->shp_path = iniparser_getstring(ini,INISECTION"tz_world_shp_file","/usr/share/timezoned/world/tz_world.shp");
     retval->dbf_path = iniparser_getstring(ini,INISECTION"tz_world_dbf_file","/usr/share/timezoned/world/tz_world.dbf");
+    //command to execute when timezone changed
+    retval->action_command = iniparser_getstring(ini,INISECTION"action_command","echo %s");
     return retval;
 }
 

@@ -50,6 +50,7 @@ if test "x$use_systemd" = "xyes"; then
     PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.3.1])
     AC_SUBST(DBUS_CFLAGS)
     AC_SUBST(DBUS_LIBS)
+    AC_MSG_NOTICE(["Systemd support enabled, also enables dbus linking"])
 else
     AC_MSG_WARN([Systemd support not enabled, building without!])
 fi
