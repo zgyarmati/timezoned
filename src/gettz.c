@@ -170,4 +170,8 @@ main (int argc, char * argv[])
         printf("%s\n", tz_get_name_by_coordinates(longitude, latitude,
                                 config->shp_path, config->dbf_path));
     }
+    if(set_system_tz){
+    
+    
+    }
 }

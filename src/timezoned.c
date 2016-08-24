@@ -68,7 +68,9 @@ void handle_signal(int sig)
      //   fprintf(log_stream, "Debug: stopping daemon ...\n");
         /* Unlock and close lockfile */
         if(pid_fd != -1) {
-            lockf(pid_fd, F_ULOCK, 0);
+            if(!lockf(pid_fd, F_ULOCK, 0)){
+                fprintf(stderr, "Failed to unlock pid file\n");
+            }
             close(pid_fd);
         }
         /* Try to delete lockfile */
@@ -129,7 +131,10 @@ static void daemonize()
 
     /* Change the working directory to the root directory */
     /* or another appropriated directory */
-    chdir("/");
+    if(!chdir("/")){
+        fprintf(stderr, "Failed to chdir to '/', exiting\n");
+        abort();
+    }
 
     /* Close all open file descriptors */
     for(fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
@@ -160,7 +165,10 @@ static void daemonize()
         /* Get current PID */
         sprintf(str, "%d\n", getpid());
         /* Write PID to lockfile */
-        write(pid_fd, str, strlen(str));
+        if(!write(pid_fd, str, strlen(str))){
+            fprintf(stderr, "Failed to write into pidfile %s, error: %s",
+                    pid_file, strerror(errno));
+        }
     }
 }
 
@@ -209,7 +217,7 @@ int main(int argc, char *argv[])
         {"daemon", no_argument, 0, 'd'},
         {NULL, 0, 0, 0}
     };
-    int value, option_index = 0, ret;
+    int value, option_index = 0;
     int start_daemonized = 0;
 
     app_name = argv[0];
@@ -244,8 +252,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "CONFIG ERROR, EXITING!\n");
         exit(EXIT_FAILURE);
     }
-    ret = log_init(config->loglevel, config->logtarget, config->logfile,
-              config->logfacility, 0);
+    if(log_init(config->loglevel, config->logtarget, config->logfile,
+              config->logfacility, 0)){
+        fprintf(stderr, "Failded to init logging, exiting...\n");
+        return EXIT_FAILURE;
+    }
     INFO("Timezoned started, pid: %d", getpid());
 
     // changed from signal handler

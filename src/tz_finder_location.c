@@ -38,7 +38,7 @@ tz_get_name_by_coordinates(double longitude, double lattitude,
                            const char* shp_path, const char *dbf_path)
 {
 
-    int i, nEntities, quality;
+    int i, nEntities;
     char *retval = NULL;
     SHPHandle   hSHP;
     DBFHandle   hDBF;
