@@ -33,8 +33,10 @@
 #include <getopt.h>
 #include <stdarg.h>
 
-#include "configuration.h"
 #include "tz_finder_location.h"
+#include "tz_system_utils.h"
+
+#include "config.h"
 
 #ifndef PACKAGE_STRING
 #define PACKAGE_STRING "gettz"
@@ -50,27 +52,36 @@ int quiet = 0;
 //can be overriden from the command line
 static char *conf_file_name = "timezoned.ini";
 
+#ifndef DEFAULT_SHP_FILE
+#define DEFAULT_SHP_FILE "/usr/share/timezoned/tz_world/tz_world.shp"
+#endif
+
+#ifndef DEFAULT_DBF_FILE
+#define DEFAULT_DBF_FILE "/usr/share/timezoned/tz_world/tz_world.dbf"
+#endif
+
 void
 print_version()
 {
-    fprintf(stderr, PACKAGE_STRING"\n");
-    fprintf(stderr, "Please report bugs to: " PACKAGE_BUGREPORT"\n");
+    fputs(PACKAGE_STRING "/gettz\n", stderr);
+    fputs("Version: " PACKAGE_VERSION "\n", stderr);
+    fputs("Please report bugs to: " PACKAGE_BUGREPORT"\n", stderr);
 }
 
 
 void
 print_help()
 {
-    fprintf(stderr, "Usage:\n\n");
-    fprintf(stderr, "gettz <options> longitude latitude\n\n");
-    fprintf(stderr, "where longitude and latitude are the geographical coordinates in decimal format\n");
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, "\t-c  --configfile filename  Read configuration from the file\n");
-    fprintf(stderr, "\t-h, --help           Print this help\n");
-    fprintf(stderr, "\t-V, --version        Print version info\n");
-    fprintf(stderr, "\t-s, --set-timezone   Set the system timezone to the requested value\n");
-    fprintf(stderr, "\t-v, --verbose        Verbose output, multiple for more verbose\n");
-    fprintf(stderr, "\t-q, --quiet          Print only the timezone (or nothing), overrides -v\n");
+    fputs("Usage:\n\n",stderr);
+    fputs("gettz <options> longitude latitude\n\n",stderr);
+    fputs("where longitude and latitude are the geographical coordinates in decimal format\n",stderr);
+    fputs("Options:\n",stderr);
+    fputs("\t-c  --configfile filename  Read configuration from the file\n",stderr);
+    fputs("\t-h, --help           Print this help\n",stderr);
+    fputs("\t-V, --version        Print version info\n",stderr);
+    fputs("\t-s, --set-timezone   Set the system timezone to the requested value\n",stderr);
+    fputs("\t-v, --verbose        Verbose output, multiple for more verbose\n",stderr);
+    fputs("\t-q, --quiet          Print only the timezone (or nothing), overrides -v\n",stderr);
 }
 
 
@@ -93,6 +104,8 @@ errormsg(const char *formatstring,...)
     va_start (args, formatstring);
     vfprintf(stderr, formatstring, args);
     va_end(args);
+    fputc('\n', stderr);
+
 }
 
 int
@@ -137,41 +150,54 @@ main (int argc, char * argv[])
 
 
     if ((argc-optind) != 2){
-        fprintf(stderr, "Need 2 coordinate parameters!\n");
+        errormsg("Need 2 coordinate parameters!\n");
         print_help();
         exit(EXIT_FAILURE);
     }
     char *endptr;
     double longitude = strtof(argv[optind],&endptr);
     if (argv[optind++] == endptr) {
-        fprintf(stderr,"can't convert longitude value <%s>, exiting...\n",argv[--optind]);
+        errormsg("can't convert longitude value <%s>, exiting...\n",argv[--optind]);
         exit(EXIT_FAILURE);
     }
     double latitude = strtof(argv[optind], &endptr);
     if (argv[optind++] == endptr) {
-        fprintf(stderr,"can't convert latitude value <%s>, exiting...\n",argv[--optind]);
+        errormsg("can't convert latitude value <%s>, exiting...\n",argv[--optind]);
         exit(EXIT_FAILURE);
+    }
+    //get shp and dbf file paths
+    char *shp_path = getenv("GETTZ_SHP_FILE");
+    char *dbf_path = getenv("GETTZ_DBF_FILE");
+
+    if (shp_path == NULL){
+        shp_path = DEFAULT_SHP_FILE;
+    }
+    if (dbf_path == NULL){
+        dbf_path = DEFAULT_DBF_FILE;
     }
 
-    //init configuration
-    Configuration *config = init_config(conf_file_name);
-    if (config == NULL){
-        fprintf(stderr, "CONFIG ERROR, EXITING!\n");
-        exit(EXIT_FAILURE);
-    }
     //get to the business
     verbosemsg(1,"Coordinates: longitude %f, latitude %f\n", longitude, latitude);
-    verbosemsg(1,"Map files: %s, %s\n",config->shp_path, config->dbf_path);
+    verbosemsg(1,"Map files: %s, %s\n",shp_path, dbf_path);
+    char * tz_name = tz_get_name_by_coordinates(longitude, latitude,
+                                                shp_path, dbf_path);
+    if (tz_name == NULL){
+        errormsg("Failed to look up timezone for the given coordinates");
+        return EXIT_FAILURE;
+    }
+
     if (!quiet){
-        printf("Timezone: %s\n", tz_get_name_by_coordinates(longitude, latitude,
-                                config->shp_path, config->dbf_path));
+        printf("Timezone: %s\n", tz_name);
     }
     else {
-        printf("%s\n", tz_get_name_by_coordinates(longitude, latitude,
-                                config->shp_path, config->dbf_path));
+        printf("%s\n", tz_name);
     }
     if(set_system_tz){
-    
-    
+#ifdef USE_SYSTEMD
+        system_set_tz_dbus(tz_name);
+#else
+        system_set_tz_symlink(tz_name);
+#endif
     }
+    return EXIT_SUCCESS;
 }
