@@ -49,8 +49,6 @@
 int verbose = 0;
 // 0 or 1, when 1, we print only the timezone
 int quiet = 0;
-//can be overriden from the command line
-static char *conf_file_name = "timezoned.ini";
 
 #ifndef DEFAULT_SHP_FILE
 #define DEFAULT_SHP_FILE "/usr/share/timezoned/tz_world/tz_world.shp"
@@ -76,7 +74,6 @@ print_help()
     fputs("gettz <options> longitude latitude\n\n",stderr);
     fputs("where longitude and latitude are the geographical coordinates in decimal format\n",stderr);
     fputs("Options:\n",stderr);
-    fputs("\t-c  --configfile filename  Read configuration from the file\n",stderr);
     fputs("\t-h, --help           Print this help\n",stderr);
     fputs("\t-V, --version        Print version info\n",stderr);
     fputs("\t-s, --set-timezone   Set the system timezone to the requested value\n",stderr);
@@ -115,7 +112,6 @@ main (int argc, char * argv[])
     int  set_system_tz = 0;
     char ch;
     static struct option long_options[] = {
-        {"configfile", required_argument, 0, 'c'},
         {"help",    no_argument,       0,  'h' },
         {"version", no_argument,       0,  'V' },
         {"set-timezone",     no_argument,       0,  's' },
@@ -123,11 +119,8 @@ main (int argc, char * argv[])
         {"quiet", no_argument,         0,  'q' },
         {0,         0,                 0,  0 }};
 
-    while ((ch = getopt_long(argc, argv, "c:hvsVq", long_options, NULL)) != -1){
+    while ((ch = getopt_long(argc, argv, "hvsVq", long_options, NULL)) != -1){
         switch (ch){
-            case 'c':
-                conf_file_name = strdup(optarg);
-                break;
             case 'h':
                 print_help();
                 exit(EXIT_SUCCESS);
