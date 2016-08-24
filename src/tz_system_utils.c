@@ -27,13 +27,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <assert.h>
+#include <ctype.h>
+#include <sys/stat.h>
 
+#include "config.h"
+
+#ifdef USE_SYSTEMD
 #include <dbus/dbus.h>
+#endif
 
 #include "logging.h"
-#define TRIM_STRING(s) for (size_t i=0, j=0; s[j]=s[i]; j+=!isspace(s[i++]));
+#define TRIM_STRING(s) for (size_t i=0, j=0; (s[j]=s[i]); j+=!isspace(s[i++]));
 #define BUFSIZE 256
 
 #define DBUS_BUS_NAME               "org.freedesktop.timedate1"
@@ -41,7 +48,10 @@
 #define DBUS_INTERFACE_NAME         "org.freedesktop.timedate1"
 #define DBUS_TZ_METHOD_NAME         "SetTimezone"
 
+#define MAX_PATH_LEN 256
+#define ZONEINFO_BASEPATH "/usr/share/zoneinfo/"
 
+#ifdef USE_SYSTEMD
 //forward declarations for local functions
 DBusMessage*
 dbus_call_timezone_method(DBusConnection *conn, const char* timezone);
@@ -53,7 +63,7 @@ dbus_call_timezone_method(DBusConnection *conn, const char* timezone);
 int
 system_set_tz_dbus(const char *tz)
 {
-    int ret;
+    int ret = 0;
     DBusError err;
     DBusConnection* conn;
     // initialise the errors
@@ -66,7 +76,7 @@ system_set_tz_dbus(const char *tz)
         dbus_error_free(&err);
     }
     if (NULL == conn) {
-        return 1;
+        ret = 1;
     }
 
     DBusMessage * reply = dbus_call_timezone_method(conn, tz);
@@ -83,58 +93,8 @@ system_set_tz_dbus(const char *tz)
 
         dbus_message_unref(reply);//unref reply
     }
-    return 0;
+    return ret;
 }
-
-// sets the system timezone by manually tinkering with the
-// /etc/timezone > /usr/share/zoneinfo/ symlink
-int
-system_set_tz_symlink(const char *tz)
-{
-
-
-
-}
-
-
-// calls the command line specified with the cmd parameter
-// if the cmd has the placeholder '%s', it will be substitued
-// with the timezone name string tz
-int
-system_execute_action(const char *cmd, const char* tz)
-{
-    char stdoutbuffer[BUFSIZE];
-    char buf[BUFSIZE];
-    FILE *fp;
-    clock_t begin, end;
-    double time_spent;
-    sprintf(buf,cmd, tz);
-
-    INFO("Calling script as: <%s>", buf);
-    begin = clock();
-    //opening it, getting the stdout
-    if ((fp = popen(buf, "r")) == NULL) {
-        printf("Error opening pipe!\n");
-        return -1;
-    }
-    // save the output into log
-    while (fgets(stdoutbuffer, BUFSIZE, fp) != NULL) {
-        TRIM_STRING(stdoutbuffer);
-        INFO("ACTION OUTPUT: %s", stdoutbuffer);
-    }
-    end = clock();
-    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    INFO("Script call ready, ran for %f secs", time_spent);
-    //close it
-    if(pclose(fp))  {
-        ERROR("Command not found or exited with error status");
-        return -1;
-    }
-    return 0;
-
-}
-
 
 
 DBusMessage*
@@ -195,3 +155,103 @@ dbus_call_timezone_method(DBusConnection *conn, const char* timezone)
 }
 
 
+
+#endif
+
+// sets the system timezone by manually tinkering with the
+// /etc/timezone > /usr/share/zoneinfo/ symlink
+int
+system_set_tz_symlink(const char *tz)
+{
+
+
+
+}
+
+
+// calls the command line specified with the cmd parameter
+// if the cmd has the placeholder '%s', it will be substitued
+// with the timezone name string tz
+int
+system_execute_action(const char *cmd, const char* tz)
+{
+    char stdoutbuffer[BUFSIZE];
+    char buf[BUFSIZE];
+    FILE *fp;
+    clock_t begin, end;
+    double time_spent;
+    sprintf(buf,cmd, tz);
+
+    INFO("Calling script as: <%s>", buf);
+    begin = clock();
+    //opening it, getting the stdout
+    if ((fp = popen(buf, "r")) == NULL) {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    // save the output into log
+    while (fgets(stdoutbuffer, BUFSIZE, fp) != NULL) {
+        TRIM_STRING(stdoutbuffer);
+        INFO("ACTION OUTPUT: %s", stdoutbuffer);
+    }
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    INFO("Script call ready, ran for %f secs", time_spent);
+    //close it
+    if(pclose(fp))  {
+        ERROR("Command not found or exited with error status");
+        return -1;
+    }
+    return 0;
+
+}
+
+bool
+system_timezone_is_valid(const char *name)
+{
+        bool slash = false;
+        const char *p;
+        char  t[MAX_PATH_LEN] = {'\0'};
+        struct stat st;
+
+        if ((name == NULL) || (strlen(name) == 0)){
+            return false;
+        }
+
+        if (name[0] == '/'){
+            return false;
+        }
+
+        for (p = name; *p; p++) {
+                if (!(*p >= '0' && *p <= '9') &&
+                    !(*p >= 'a' && *p <= 'z') &&
+                    !(*p >= 'A' && *p <= 'Z') &&
+                    !(*p == '-' || *p == '_' || *p == '+' || *p == '/')){
+                        return false;
+                    }
+
+                if (*p == '/') {
+                    if (slash){
+                        return false;
+                    }
+                    slash = true;
+                } else {
+                    slash = false;
+                }
+        }
+
+        if (slash){
+            return false;
+        }
+
+        strncpy(t,ZONEINFO_BASEPATH, MAX_PATH_LEN);
+        strncat(t,name,MAX_PATH_LEN-strlen(t)-1);
+        if (stat(t, &st) < 0)
+                return false;
+
+        if (!S_ISREG(st.st_mode))
+                return false;
+
+        return true;
+}

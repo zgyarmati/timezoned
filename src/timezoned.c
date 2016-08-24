@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <math.h>
+#include <assert.h>
+
 
 #include <gps.h>
 
@@ -52,6 +54,9 @@ static char *conf_file_name = PACKAGE_NAME".ini";
 static char *pid_file = "/var/lock/"PACKAGE_NAME;
 static int pid_fd = -1;
 static char *app_name = PACKAGE_NAME;
+
+
+Configuration *config = NULL;
 
 /**
  * \brief   Callback function for handling signals.
@@ -177,10 +182,17 @@ void
 process_coordinates(const float lat, const float lon,
                     const char *shp_path, const char *dbf_path)
 {
+    assert(config);
     char *tz_name = tz_get_name_by_coordinates(lon, lat,shp_path, dbf_path);
+    if (!system_timezone_is_valid(tz_name)){
+        ERROR("Timezone %s is invalid on this system, not setting it",tz_name);
+        return;
+    }
     INFO("%s\n",tz_name);
 
+#ifdef USE_SYSTEMD
     system_set_tz_dbus(tz_name);
+#endif
     system_execute_action(config->action_command, tz_name);
 }
 
@@ -224,7 +236,7 @@ int main(int argc, char *argv[])
         daemonize();
     }
     signal(SIGINT, handle_signal);
-    Configuration *config = init_config(conf_file_name);
+    config = init_config(conf_file_name);
     if (config == NULL){
         fprintf(stderr, "CONFIG ERROR, EXITING!\n");
         exit(EXIT_FAILURE);

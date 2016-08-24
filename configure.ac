@@ -41,7 +41,7 @@ else
 fi
 
 
-# check whether the user wants to build with 
+# check whether the user wants to build with
 AC_ARG_ENABLE([use-systemd], "Enable to let timezoned to use systemd to set the timezone and start at boot", 
               use_systemd=yes, use_systemd=no)
 
