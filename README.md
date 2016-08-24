@@ -8,7 +8,7 @@ Timezoned has 2 mandatory and 1 optional dependencies: [shapelib](http://shapeli
 To check out the code and compile on a recent Debian based system:
 
 ```bash
-# get depencies:
+# get dependencies:
 apt-get install libdbus-1-dev libshp-dev libgps-dev
 # get the source
 git clone https://github.com/zgyarmati/timezoned.git
@@ -31,6 +31,3 @@ GETTZ_SHP_FILE="data/tz_world/tz_world.shp" GETTZ_DBF_FILE="data/tz_world/tz_wor
 http://stackoverflow.com/questions/5584602/determine-timezone-from-latitude-longitude-without-using-web-services-like-geona
 
 http://redwarrior.org/blog/?p=16
-
-GETTZ_SHP_FILE="data/tz_world/tz_world.shp" GETTZ_DBF_FILE="data/tz_world/tz_world.dbf" ./src/gettz 20.3821615  47.891469167
-
