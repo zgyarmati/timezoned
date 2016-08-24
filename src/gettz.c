@@ -65,7 +65,7 @@ print_help()
     fprintf(stderr, "gettz <options> longitude latitude\n\n");
     fprintf(stderr, "where longitude and latitude are the geographical coordinates in decimal format\n");
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "\t-c --configfile filename  Read configuration from the file\n");
+    fprintf(stderr, "\t-c  --configfile filename  Read configuration from the file\n");
     fprintf(stderr, "\t-h, --help           Print this help\n");
     fprintf(stderr, "\t-V, --version        Print version info\n");
     fprintf(stderr, "\t-s, --set-timezone   Set the system timezone to the requested value\n");

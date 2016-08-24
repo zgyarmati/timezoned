@@ -30,8 +30,14 @@
 #include <stdbool.h>
 #include <time.h>
 #include <assert.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <errno.h>
+#include <unistd.h>
+
+
 
 #include "config.h"
 
@@ -51,8 +57,10 @@
 #define MAX_PATH_LEN 256
 #define ZONEINFO_BASEPATH "/usr/share/zoneinfo/"
 
-#ifdef USE_SYSTEMD
 //forward declarations for local functions
+int system_clock_set_timezone(int *min);
+
+#ifdef USE_SYSTEMD
 DBusMessage*
 dbus_call_timezone_method(DBusConnection *conn, const char* timezone);
 
@@ -163,9 +171,29 @@ dbus_call_timezone_method(DBusConnection *conn, const char* timezone)
 int
 system_set_tz_symlink(const char *tz)
 {
+    char  tzpath[MAX_PATH_LEN] = {'\0'};
 
+    if ((tz==NULL) || !strlen(tz)) {
+        return -1;
+    }
 
+    if (unlink("/etc/localtime") < 0 && errno != ENOENT){
+        ERROR("Failed to unlink old symlink from /etc/localtime: %s",strerror(errno));
+        return -1;
+    }
 
+    strncpy(tzpath,ZONEINFO_BASEPATH, MAX_PATH_LEN);
+    strncat(tzpath,tz,MAX_PATH_LEN-strlen(tzpath)-1);
+    DEBUG("Timezone path: %s", tzpath);
+
+    if (symlink(tzpath,"/etc/localtime") < 0){
+        ERROR("Failed to create symlink from /etc/localtime: %s",strerror(errno));
+        return -1;
+    }
+
+    system_clock_set_timezone(NULL);
+
+    return 0;
 }
 
 
@@ -254,4 +282,38 @@ system_timezone_is_valid(const char *name)
                 return false;
 
         return true;
+}
+
+
+/* Notifies the kernel about the timezone change, adopted from
+ * systemd's clock_util.c clock_set_timezone() function
+ */
+int
+system_clock_set_timezone(int *min)
+{
+        const struct timeval *tv_null = NULL;
+        struct timespec ts;
+        struct tm *tm;
+        int minutesdelta;
+        struct timezone tz;
+
+        assert(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+        assert(tm = localtime(&ts.tv_sec));
+        minutesdelta = tm->tm_gmtoff / 60;
+
+        tz.tz_minuteswest = -minutesdelta;
+        tz.tz_dsttime = 0; /* DST_NONE */
+
+        /*
+         * If the RTC does not run in UTC but in local time, the very first
+         * call to settimeofday() will set the kernel's timezone and will warp the
+         * system clock, so that it runs in UTC instead of the local time we
+         * have read from the RTC.
+         */
+        if (settimeofday(tv_null, &tz) < 0)
+                return -1;
+
+        if (min)
+                *min = minutesdelta;
+        return 0;
 }

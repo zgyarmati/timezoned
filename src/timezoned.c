@@ -188,11 +188,14 @@ process_coordinates(const float lat, const float lon,
         ERROR("Timezone %s is invalid on this system, not setting it",tz_name);
         return;
     }
-    INFO("%s\n",tz_name);
+    INFO("The timezone got from coordinates: %s\n",tz_name);
 
 #ifdef USE_SYSTEMD
     system_set_tz_dbus(tz_name);
+#else
+    system_set_tz_symlink(tz_name);
 #endif
+
     system_execute_action(config->action_command, tz_name);
 }
 
