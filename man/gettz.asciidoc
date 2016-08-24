@@ -5,38 +5,52 @@ gettz(1)
 
 NAME
 ----
-gettz - utility to search the timezone code based on the coordinates. Optionally 
-it also can set the system's timezone
+gettz - lookup timezone from coordinates
 
 
 SYNOPSIS
 --------
-*gettz* ['OPTIONS']
+*gettz* ['OPTIONS'] <longitude> <latitude>
 
 
 DESCRIPTION
 -----------
-
- Finding timezone based on coordinates
-
+    gettz is a simple utility to search the timezone code based on the
+    coordinates. Optionally it also can set the system's timezone.
+    Example invocation:
+    $ ./src/gettz 20.3821615 47.891469167
+    $ Timezone: "Europe/Budapest"
+    gettz uses the TZ shapefiles (http://efele.net/maps/tz/world/) created by
+    Eric Muller to calculate the timezone at the given coordinates. These
+    shapefiles are installed by the package, but you can also use custom path,
+    see CONFIGURATION
 
 
 OPTIONS
 -------
--c --configfile /path/to/configfile ::
-    Set the path to the configfile. Default is /etc/timezoned.ini
-
 -h --help::
     Print help text
 
--v --version::
+-V --version::
     print version info
+
+-s --set-timezone::
+    set the system timezone to the calculated value
+
+-v --verbose::
+    Verbose output, multiple for more verbose
+
+-q, --quiet::
+    Print only the timezone (or nothing), overrides -v
 
 
 
 CONFIGURATION
 -------------
-    See the commented /etc/timezoned.ini
+    gettz needs only the path of the .shp and .dbf files, which defaults to
+    /usr/share/timezoned/tz_world/tz_world.{dbf,shp}, but it also can be set via
+    the GETTZ_DBF_FILE and GETTZ_SHP_FILE environment variables, respectively.
+
 
 AUTHORS
 -------

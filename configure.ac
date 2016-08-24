@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT(timezoned, 0.1, mr.zoltan.gyarmati@gmail.com)
+AC_INIT(timezoned, 0.1~, mr.zoltan.gyarmati@gmail.com)
 AC_CONFIG_SRCDIR([src/timezoned.c])
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_PROG_RANLIB
