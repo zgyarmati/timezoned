@@ -26,8 +26,12 @@ GETTZ_SHP_FILE="data/tz_world/tz_world.shp" GETTZ_DBF_FILE="data/tz_world/tz_wor
 # ^ should yield Europe/Budapest
 ```
 
+## Mandatory XKCD reference
+![Time zone](https://imgs.xkcd.com/comics/supervillain_plan.png)
+
 ## Bookmarks
 
 http://stackoverflow.com/questions/5584602/determine-timezone-from-latitude-longitude-without-using-web-services-like-geona
 
 http://redwarrior.org/blog/?p=16
+
