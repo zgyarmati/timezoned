@@ -51,11 +51,11 @@ int verbose = 0;
 int quiet = 0;
 
 #ifndef DEFAULT_SHP_FILE
-#define DEFAULT_SHP_FILE "/usr/share/timezoned/tz_world/tz_world.shp"
+#define DEFAULT_SHP_FILE "/usr/share/timezoned/dist/combined_shapefile.shp"
 #endif
 
 #ifndef DEFAULT_DBF_FILE
-#define DEFAULT_DBF_FILE "/usr/share/timezoned/tz_world/tz_world.dbf"
+#define DEFAULT_DBF_FILE "/usr/share/timezoned/dist/combined_shapefile.dbf"
 #endif
 
 void
@@ -102,7 +102,6 @@ errormsg(const char *formatstring,...)
     vfprintf(stderr, formatstring, args);
     va_end(args);
     fputc('\n', stderr);
-
 }
 
 int

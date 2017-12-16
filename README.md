@@ -1,6 +1,6 @@
 # Timezoned
 
-The timezoned package contains a daemon (timezoned) which connects to [GPSd](http://catb.org/gpsd/), regularly requests the current position of the system, and based on the GPS coordinates looks up the timezone assigned to the current location (using the [TZ shapefiles](http://efele.net/maps/tz/world/) created by Eric Muller) and sets the system's timezone accordingly. The goal is to always set the current timezone on ever-moving embededd systems (like digital signage systems on vehicles), so they can always display the correct local time. The package also contains a command line utility which accepts coordinates as command line arguments, looks up and prints the corresponding timezone name, and optionally sets the system's timezone to it.
+The timezoned package contains a daemon (timezoned) which connects to [GPSd](http://catb.org/gpsd/), regularly requests the current position of the system, and based on the GPS coordinates looks up the timezone assigned to the current location (using the [TZ shapefiles](https://github.com/evansiroky/timezone-boundary-builder/releases) created by [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder) project, and eariler was maintained by Eric Muller) and sets the system's timezone accordingly. The goal is to always set the current timezone on ever-moving embededd systems (like digital signage systems on vehicles), so they can always display the correct local time. The package also contains a command line utility which accepts coordinates as command line arguments, looks up and prints the corresponding timezone name, and optionally sets the system's timezone to it.
 
 ## Building
 Timezoned has 2 mandatory and 1 optional dependencies: [shapelib](http://shapelib.maptools.org/), [libgps](http://catb.org/gpsd/), and optionally (if the system uses systemd and systemd-timedated) [libdbus](https://www.freedesktop.org/wiki/Software/dbus/), and obviosly  running systemd-timedated as runtime dependency.
@@ -22,7 +22,7 @@ make
 # if you also want to install it:
 sudo make install
 #running gettz from the source dir:
-GETTZ_SHP_FILE="data/tz_world/tz_world.shp" GETTZ_DBF_FILE="data/tz_world/tz_world.dbf" ./src/gettz 20.3821615  47.891469167
+GETTZ_SHP_FILE="data/dist/combined_shapefile.shp" GETTZ_DBF_FILE="data/dist/combined_shapefile.dbf" ./src/gettz 20.3821615  47.891469167
 # ^ should yield Europe/Budapest
 ```
 
@@ -35,3 +35,6 @@ http://stackoverflow.com/questions/5584602/determine-timezone-from-latitude-long
 
 http://redwarrior.org/blog/?p=16
 
+http://efele.net/maps/tz/world/
+
+https://github.com/evansiroky/timezone-boundary-builder

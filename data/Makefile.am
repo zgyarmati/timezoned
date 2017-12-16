@@ -1,11 +1,10 @@
-tzworlddir = $(pkgdatadir)/tz_world
+tzworlddir = $(pkgdatadir)/dist
 
 
-tzworld_DATA =  tz_world/index.html \
-				tz_world/tz_world.dbf \
-				tz_world/tz_world.png \
-				tz_world/tz_world.prj \
-				tz_world/tz_world.shp \
-				tz_world/tz_world.shx
+tzworld_DATA =  dist/Readme.md \
+				dist/combined_shapefile.dbf \
+				dist/combined_shapefile.prj \
+				dist/combined_shapefile.shp \
+				dist/combined_shapefile.shx
 
-EXTRA_DIST = tz_world
+EXTRA_DIST = dist
